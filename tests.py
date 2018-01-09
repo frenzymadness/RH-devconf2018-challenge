@@ -5,6 +5,7 @@ from itertools import cycle
 
 PYTHON3 = '/usr/bin/python3'
 PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
+TOKENIZER = [PYTHON3, '-m', 'tokenize']
 checks = [
     ([1, 1, 3], True),
     ([1, 2, 3, 4, 5, 6], False),
@@ -99,6 +100,18 @@ def profile(script, arg):
     return time, memory
 
 
+def count_tokens(script):
+    total = 0
+    output = check_output(TOKENIZER + [script])
+    lines = output.split(b'\n')
+    for line in lines[:-1]:
+        token = line.split()[1]
+        if token not in [b'COMMENT', b'NL', b'NEWLINE']:
+            total += 1
+    
+    return total
+
+
 def main():
     script = sys.argv[1]
 
@@ -117,8 +130,10 @@ def main():
         total_time.append(time)
         total_mem.append(memory)
 
-    print('Average time is {:.4f}, average memory is {:.4f}'.format(
-        sum(total_time)/len(total_time), sum(total_mem)/len(total_mem)))
+    tokens = count_tokens(script)
+
+    print('Average time is {:.4f}, average memory is {:.4f}, tokens {}'.format(
+        sum(total_time)/len(total_time), sum(total_mem)/len(total_mem), tokens))
 
 
 if __name__ == '__main__':
