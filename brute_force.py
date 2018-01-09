@@ -6,7 +6,7 @@ import sys
 
 def winning_die(enemy_die):
     faces = len(enemy_die)
-    highest = min(max(enemy_die)+1,18)
+    highest = min(max(enemy_die)+1, 18)
     summe = sum(enemy_die)
 
     for el in itertools.combinations_with_replacement(
@@ -27,8 +27,8 @@ def winning_die(enemy_die):
                     ties += 1 
 
         try:            
-            p=wins/(faces**2-ties)
-            if p>0.5:
+            p = wins/(faces**2-ties)
+            if p > 0.5:
                 return turn
 
         except:

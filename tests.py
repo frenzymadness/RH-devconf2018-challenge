@@ -101,12 +101,12 @@ def profile(script, arg):
 
 def main():
     script = sys.argv[1]
-    
+
     valid, exit_code = valid_solution(script)
 
     if not valid:
         sys.exit(exit_code)
-    
+
     total_time, total_mem = [], []
 
     checks_cycle = cycle(performance_checks)
@@ -119,7 +119,7 @@ def main():
 
     print('Average time is {:.4f}, average memory is {:.4f}'.format(
         sum(total_time)/len(total_time), sum(total_mem)/len(total_mem)))
-    
+
 
 if __name__ == '__main__':
     main()
