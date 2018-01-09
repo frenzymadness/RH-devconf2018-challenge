@@ -59,3 +59,14 @@ $ ./tests.py brute_force.py
 .
 Average time is 1.2984, average memory is 9391.6800
 ```
+
+## Test results
+
+```
+for solution in brute_force.py generators.py longer_but_fast.py long.py short_magic.py; do echo -n "$solution - " && ./tests.py $solution | grep -v "^\." ; done
+brute_force.py - Average time is 1.3192, average memory is 9388.6400, tokens 231
+generators.py - Average time is 4.9748, average memory is 9388.3200, tokens 248
+longer_but_fast.py - Average time is 0.0300, average memory is 9452.3200, tokens 317
+long.py - Average time is 11.7912, average memory is 9478.5600, tokens 782
+short_magic.py - Average time is 5.2232, average memory is 9381.6000, tokens 193
+```
