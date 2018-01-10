@@ -102,7 +102,7 @@ def profile(script, arg):
             TIMEOUT_CMD + PROFILER + [PYTHON3, script, ','.join([str(x) for x in arg])],
             stderr=STDOUT)
     except CalledProcessError as e:
-        time, memory = TIMEOUT, 100000
+        time, memory = TIMEOUT, None
     else:
         last_line = output.split(b'\n')[-2].replace(b'"', b'')
         time, memory = [float(x.strip()) for x in last_line.split()]
@@ -139,7 +139,8 @@ def main():
 
         time, memory = profile(script, check)
         total_time.append(time)
-        total_mem.append(memory)
+        if memory is not None:
+            total_mem.append(memory)
 
         if DEBUG:
             print('Time {}, memory {}'.format(time, memory))
