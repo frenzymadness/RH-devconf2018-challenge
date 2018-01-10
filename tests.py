@@ -25,8 +25,10 @@ checks = [
 ]
 
 performance_checks = [
-    list(range(1, 13)),  # Solution doesn't exist
-    list(range(2, 13)),  # Solution exist
+    list(range(1, 13)),  # Small numbers, small, die, solution doesn't exists
+    list(range(2, 13)),  # Small numbers, small die, solution exists
+    list([x**4 for x in range(2, 10)]),  # Big numbers, small dice, solution exists
+    list(range(2, 20)),  # Small numbers, big dice, solution exists
 ]
 
 
