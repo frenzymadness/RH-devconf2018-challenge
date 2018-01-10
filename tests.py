@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import sys
-from subprocess import check_output, STDOUT
+from subprocess import check_output, STDOUT, CalledProcessError
 from itertools import cycle
 
 PYTHON3 = '/usr/bin/python3'
 PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
 TOKENIZER = [PYTHON3, '-m', 'tokenize']
+TIMEOUT = 60
+TIMEOUT_CMD = ['/usr/bin/timeout', str(TIMEOUT)]
+DEBUG = True
 checks = [
     ([1, 1, 3], True),
     ([1, 2, 3, 4, 5, 6], False),
@@ -92,11 +95,15 @@ def valid_solution(script):
 
 
 def profile(script, arg):
-    output = check_output(
-        PROFILER + [PYTHON3, script, ','.join([str(x) for x in arg])],
-        stderr=STDOUT)
-    last_line = output.split(b'\n')[-2].replace(b'"', b'')
-    time, memory = [float(x.strip()) for x in last_line.split()]
+    try:
+        output = check_output(
+            TIMEOUT_CMD + PROFILER + [PYTHON3, script, ','.join([str(x) for x in arg])],
+            stderr=STDOUT)
+    except CalledProcessError as e:
+        time, memory = TIMEOUT, 100000
+    else:
+        last_line = output.split(b'\n')[-2].replace(b'"', b'')
+        time, memory = [float(x.strip()) for x in last_line.split()]
     return time, memory
 
 
@@ -123,12 +130,17 @@ def main():
     total_time, total_mem = [], []
 
     checks_cycle = cycle(performance_checks)
-    for _ in range(25):
+    for _ in range(20):
+        if DEBUG:
+            print("Step {}, check {}".format(_, (_ % len(performance_checks) + 1)))
         check = next(checks_cycle)
 
         time, memory = profile(script, check)
         total_time.append(time)
         total_mem.append(memory)
+
+        if DEBUG:
+            print('Time {}, memory {}'.format(time, memory))
 
     tokens = count_tokens(script)
 
