@@ -20,15 +20,14 @@ checks = [
     ([3, 4, 8, 8], True),
     ([3, 4, 6, 8], True),
     ([3, 5, 6, 8, 10], True),
-    ([1, 1, 1], False),
-    ([1], False)
+    ([1, 1, 1], False)
 ]
 
 performance_checks = [
-    list(range(1, 13)),  # Small numbers, small, die, solution doesn't exists
-    list(range(2, 13)),  # Small numbers, small die, solution exists
-    list([x**4 for x in range(2, 10)]),  # Big numbers, small dice, solution exists
-    list(range(2, 20)),  # Small numbers, big dice, solution exists
+    list(range(1, 11)),  # Small numbers, small, die, solution doesn't exists
+    list(range(2, 12)),  # Small numbers, small die, solution exists
+    list([x**3 for x in range(2, 12)]),  # Big numbers, small dice, solution exists
+    list(range(2, 21)),  # Small numbers, big dice, solution exists
 ]
 
 
@@ -132,7 +131,7 @@ def main():
     total_time, total_mem = [], []
 
     checks_cycle = cycle(performance_checks)
-    for _ in range(20):
+    for _ in range(16):
         if DEBUG:
             print("Step {}, check {}".format(_, (_ % len(performance_checks) + 1)))
         check = next(checks_cycle)
