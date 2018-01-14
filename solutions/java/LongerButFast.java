@@ -12,9 +12,6 @@ public class LongerButFast {
 
     public static void main(final String... args) {
         final int[] theirs = create(args[0]);
-        if (theirs == null) {
-            throw new IllegalArgumentException();
-        }
         final int[] result = LongerButFast.winningDie(theirs);
         if (result == null) {
             System.out.println();
@@ -25,19 +22,15 @@ public class LongerButFast {
 
     private static int[] create(final String dice) {
         final String[] sides = PATTERN.split(dice);
-        final int[] actualSides = new int[sides.length];
-        for (int i = 0; i < actualSides.length; i++) {
-            actualSides[i] = Integer.parseInt(sides[i]);
-            if (actualSides[i] < 1) {
-                return null;
-            }
-        }
-        Arrays.sort(actualSides);
-        return actualSides;
+        return Arrays.stream(sides)
+                .mapToInt(s -> Integer.parseInt(s))
+                .toArray();
     }
 
     public static String toString(final int[] die) {
-        return IntStream.of(die).mapToObj(String::valueOf).collect(Collectors.joining(","));
+        return IntStream.of(die)
+                .mapToObj(String::valueOf)
+                .collect(Collectors.joining(","));
     }
 
     private static int[] winningDie(final int[] enemy) {
@@ -56,21 +49,21 @@ public class LongerButFast {
                 final int curSubSum = subsum;
                 final int[] possibility = IntStream.range(1, curSubSum - curDieNum + 1)
                         .mapToObj(last -> new int[]{win[last] + subanswers[curDieNum][curSubSum - last][0], last})
-                        .max(COMPARATOR).orElseThrow(IllegalStateException::new);
+                        .max(COMPARATOR)
+                        .orElseThrow(IllegalStateException::new);
                 subanswers[curDieNum + 1][curSubSum] = possibility;
             }
         }
-        if (subanswers[dim][total][0] > 0) {
-            final int[] ans = new int[dim];
-            int cur = total;
-            for (int i = 0; i < dim; i++) {
-                final int side = subanswers[dim - i][cur][1];
-                ans[i] = side;
-                cur -= side;
-            }
-            return ans;
-        } else {
+        if (subanswers[dim][total][0] < 1) {
             return null;
         }
+        final int[] ans = new int[dim];
+        int cur = total;
+        for (int i = 0; i < dim; i++) {
+            final int side = subanswers[dim - i][cur][1];
+            ans[i] = side;
+            cur -= side;
+        }
+        return ans;
     }
 }
