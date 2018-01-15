@@ -1,1 +1,3 @@
 .vscode
+.idea/**
+solutions/java/*.class
