@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 import sys
-from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import call, check_output, STDOUT, CalledProcessError
 from itertools import cycle
 
-PYTHON3 = '/usr/bin/python3'
+COMPILERS = {
+    'java': ['/usr/bin/javac']
+}
+RUNNERS = {
+    'py': ['/usr/bin/python3'],
+    'java': ['java', '-Xms32m', '-Xmx32m']
+}
 PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
-TOKENIZER = [PYTHON3, '-m', 'tokenize']
+TOKENIZERS = {
+    'py': RUNNERS['py'] + ['-m', 'tokenize']
+}
 TIMEOUT = 60
 TIMEOUT_CMD = ['/usr/bin/timeout', str(TIMEOUT)]
 DEBUG = True
@@ -31,8 +39,11 @@ performance_checks = [
 ]
 
 
-def run_script(script, arg):
-    output = check_output([PYTHON3, script, arg])
+def run_script(script, extension, arg):
+    if extension == 'java':
+        script = script.rstrip('.java')
+
+    output = check_output(RUNNERS[extension] + [script, arg])
     output = output.strip()
     if output == b"":
         return None
@@ -53,12 +64,12 @@ def is_players_die_better(player, enemy):
     return total_wins > 0
 
 
-def valid_solution(script):
+def valid_solution(script, extension):
     exit_code = 0
 
     for check in checks:
         enemy, better_exist = check
-        player = run_script(script, ','.join([str(n) for n in enemy]))
+        player = run_script(script, extension, ','.join([str(n) for n in enemy]))
 
         if not better_exist:
             if player is None:
@@ -95,10 +106,13 @@ def valid_solution(script):
         return True, exit_code
 
 
-def profile(script, arg):
+def profile(script, extension, arg):
+    if extension == 'java':
+        script = script.rstrip('.java')
+
     try:
         output = check_output(
-            TIMEOUT_CMD + PROFILER + [PYTHON3, script, ','.join([str(x) for x in arg])],
+            TIMEOUT_CMD + PROFILER + RUNNERS[extension] + [script, ','.join([str(x) for x in arg])],
             stderr=STDOUT)
     except CalledProcessError as e:
         time, memory = TIMEOUT * 2, None
@@ -108,22 +122,31 @@ def profile(script, arg):
     return time, memory
 
 
-def count_tokens(script):
+def count_tokens(script, extension):
     total = 0
-    output = check_output(TOKENIZER + [script])
-    lines = output.split(b'\n')
-    for line in lines[:-1]:
-        token = line.split()[1]
-        if token not in [b'COMMENT', b'NL', b'NEWLINE']:
-            total += 1
-    
+    output = check_output(TOKENIZERS[extension] + [script])
+    if extension == 'py':
+        lines = output.split(b'\n')
+        for line in lines[:-1]:
+            token = line.split()[1]
+            if token not in [b'COMMENT', b'NL', b'NEWLINE']:
+                total += 1
+
     return total
 
 
 def main():
     script = sys.argv[1]
 
-    valid, exit_code = valid_solution(script)
+    extension = script.split('.')[-1]
+    if extension not in ['java', 'py']:
+        print('Unknown solution language!')
+        sys.exit(1)
+
+    if extension in COMPILERS.keys():
+        call(COMPILERS[extension] + [script])
+
+    valid, exit_code = valid_solution(script, extension)
 
     if not valid:
         sys.exit(exit_code)
@@ -136,7 +159,7 @@ def main():
             print("Step {}, check {}".format(_, (_ % len(performance_checks) + 1)))
         check = next(checks_cycle)
 
-        time, memory = profile(script, check)
+        time, memory = profile(script, extension, check)
         total_time.append(time)
         if memory is not None:
             total_mem.append(memory)
@@ -144,7 +167,10 @@ def main():
         if DEBUG:
             print('Time {}, memory {}'.format(time, memory))
 
-    tokens = count_tokens(script)
+    if extension in TOKENIZERS.keys():
+        tokens = count_tokens(script, extension)
+    else:
+        tokens = None
 
     print('Average time is {:.4f}, average memory is {:.4f}, tokens {}'.format(
         sum(total_time)/len(total_time), sum(total_mem)/len(total_mem), tokens))
