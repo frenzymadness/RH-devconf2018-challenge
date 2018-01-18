@@ -7,7 +7,7 @@ package. If you're using Windows, go fish.
 
 ## Submitting your solution
 
-You must submit your solution in the form of Java source code. This source code must be placed in one and only one file
+You must submit your solution in the form of C source code. This source code must be placed in one and only one file
 with a name of your choosing. Your solution must compile using the following command, without any extra dependencies:
 
     $ clang YourSolutionFile.c -o solution
