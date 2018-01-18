@@ -2,17 +2,20 @@
 import sys
 from subprocess import call, check_output, STDOUT, CalledProcessError
 from itertools import cycle
+import re
 
 COMPILERS = {
     'java': ['/usr/bin/javac']
 }
 RUNNERS = {
     'py': ['/usr/bin/python3'],
-    'java': ['java', '-Xms32m', '-Xmx32m']
+    'java': ['java', '-Xms32m', '-Xmx32m'],
+    'c': []
 }
 PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
 TOKENIZERS = {
-    'py': RUNNERS['py'] + ['-m', 'tokenize']
+    'py': RUNNERS['py'] + ['-m', 'tokenize'],
+    'c': ['./tokenize']
 }
 TIMEOUT = 60
 TIMEOUT_CMD = ['/usr/bin/timeout', str(TIMEOUT)]
@@ -23,6 +26,8 @@ checks = [
     ([2, 3, 4, 5, 6, 7], True),
     ([3, 3, 3, 3, 6, 6], True),
     ([4, 4, 4, 4, 4, 4], True),
+    ([7, 7, 6, 1, 1, 1, 1], True),
+    ([7, 7, 6, 1, 1, 1], True),
     ([1, 1, 1, 4], True),
     ([2, 3, 4], True),
     ([3, 4, 8, 8], True),
@@ -32,10 +37,12 @@ checks = [
 ]
 
 performance_checks = [
-    list(range(1, 11)),  # Small numbers, small, die, solution doesn't exists
-    list(range(2, 12)),  # Small numbers, small die, solution exists
+    list(range(1, 11)),  # Small numbers, small dice, solution doesn't exists
+    list(range(1, 31)),  # Small numbers, big dice, solution doesn't exists
+    list(range(2, 12)),  # Small numbers, small dice, solution exists
     list([x**3 for x in range(2, 12)]),  # Big numbers, small dice, solution exists
     list(range(2, 21)),  # Small numbers, big dice, solution exists
+    list([x**3 for x in range(2, 21)]),  # Big numbers, small dice, solution exists
 ]
 
 
@@ -131,6 +138,8 @@ def count_tokens(script, extension):
             token = line.split()[1]
             if token not in [b'COMMENT', b'NL', b'NEWLINE']:
                 total += 1
+    if extension == 'c':
+        return re.findall('\d+', output.decode('utf-8'))
 
     return total
 
@@ -139,12 +148,17 @@ def main():
     script = sys.argv[1]
 
     extension = script.split('.')[-1]
-    if extension not in ['java', 'py']:
+    if extension not in ['java', 'py', 'c']:
         print('Unknown solution language!')
         sys.exit(1)
 
     if extension in COMPILERS.keys():
         call(COMPILERS[extension] + [script])
+
+    if extension == 'c':
+        call(['g++', 'tokenize.cpp', '-lclang', '-o', 'tokenize'])
+        call(['clang', script, '-o', 'candidate'])
+        script = './candidate'
 
     valid, exit_code = valid_solution(script, extension)
 
@@ -168,6 +182,8 @@ def main():
             print('Time {}, memory {}'.format(time, memory))
 
     if extension in TOKENIZERS.keys():
+        if extension == 'c':
+            script = sys.argv[1]
         tokens = count_tokens(script, extension)
     else:
         tokens = None
