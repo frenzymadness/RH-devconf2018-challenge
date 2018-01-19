@@ -70,3 +70,18 @@ longer_but_fast.py - Average time is 0.0300, average memory is 9452.3200, tokens
 long.py - Average time is 11.7912, average memory is 9478.5600, tokens 782
 short_magic.py - Average time is 5.2232, average memory is 9381.6000, tokens 193
 ```
+
+## How to prepare testing machine
+
+### Install packages
+
+```
+sudo dnf install clang-devel java java-9-openjdk java-9-openjdk-devel
+```
+
+### Compile C tokenizer and move it to PATH
+
+```
+g++ tokenize.cpp -lclang -o tokenize
+sudo cp ./tokenize /usr/local/bin
+```
