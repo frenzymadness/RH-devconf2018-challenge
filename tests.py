@@ -15,7 +15,7 @@ RUNNERS = {
 PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
 TOKENIZERS = {
     'py': RUNNERS['py'] + ['-m', 'tokenize'],
-    'c': ['./tokenize']
+    'c': ['tokenize']
 }
 TIMEOUT = 60
 TIMEOUT_CMD = ['/usr/bin/timeout', str(TIMEOUT)]
@@ -156,7 +156,6 @@ def main():
         call(COMPILERS[extension] + [script])
 
     if extension == 'c':
-        call(['g++', 'tokenize.cpp', '-lclang', '-o', 'tokenize'])
         call(['clang', script, '-o', 'candidate'])
         script = './candidate'
 
