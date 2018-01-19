@@ -5,7 +5,8 @@ from itertools import cycle
 import re
 
 COMPILERS = {
-    'java': ['/usr/bin/javac']
+    'java': ['/usr/bin/javac'],
+    'c': ['clang', '-o', 'candidate']
 }
 RUNNERS = {
     'py': ['/usr/bin/python3'],
@@ -15,6 +16,7 @@ RUNNERS = {
 PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
 TOKENIZERS = {
     'py': RUNNERS['py'] + ['-m', 'tokenize'],
+    'java': ['java', '-jar', 'java-tokenizer.jar'],
     'c': ['tokenize']
 }
 TIMEOUT = 60
@@ -47,9 +49,6 @@ performance_checks = [
 
 
 def run_script(script, extension, arg):
-    if extension == 'java':
-        script = script.rstrip('.java')
-
     output = check_output(RUNNERS[extension] + [script, arg])
     output = output.strip()
     if output == b"":
@@ -138,26 +137,33 @@ def count_tokens(script, extension):
             token = line.split()[1]
             if token not in [b'COMMENT', b'NL', b'NEWLINE']:
                 total += 1
-    if extension == 'c':
-        return re.findall('\d+', output.decode('utf-8'))
+    if extension == 'c' or extension == 'java':
+        result = re.findall('\d+', output.decode('utf-8'))
+        return int(result[0])
 
     return total
 
 
+def clean():
+    call(['git', 'clean', '-fd'])
+
+
 def main():
     script = sys.argv[1]
+    source_code = script
 
-    extension = script.split('.')[-1]
+    extension = source_code.split('.')[-1]
     if extension not in ['java', 'py', 'c']:
         print('Unknown solution language!')
         sys.exit(1)
 
     if extension in COMPILERS.keys():
-        call(COMPILERS[extension] + [script])
+        call(COMPILERS[extension] + [source_code])
 
     if extension == 'c':
-        call(['clang', script, '-o', 'candidate'])
         script = './candidate'
+    elif extension == 'java':
+        script = source_code.rstrip('.java')
 
     valid, exit_code = valid_solution(script, extension)
 
@@ -181,14 +187,14 @@ def main():
             print('Time {}, memory {}'.format(time, memory))
 
     if extension in TOKENIZERS.keys():
-        if extension == 'c':
-            script = sys.argv[1]
-        tokens = count_tokens(script, extension)
+        tokens = count_tokens(source_code, extension)
     else:
         tokens = None
 
     print('Average time is {:.4f}, average memory is {:.4f}, tokens {}'.format(
         sum(total_time)/len(total_time), sum(total_mem)/len(total_mem), tokens))
+
+    clean()
 
 
 if __name__ == '__main__':

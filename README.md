@@ -76,7 +76,7 @@ short_magic.py - Average time is 5.2232, average memory is 9381.6000, tokens 193
 ### Install packages
 
 ```
-sudo dnf install clang-devel java java-9-openjdk java-9-openjdk-devel
+sudo dnf install clang-devel java java-9-openjdk java-9-openjdk-devel maven python3
 ```
 
 ### Compile C tokenizer and move it to PATH
@@ -84,4 +84,13 @@ sudo dnf install clang-devel java java-9-openjdk java-9-openjdk-devel
 ```
 g++ tokenize.cpp -lclang -o tokenize
 sudo cp ./tokenize /usr/local/bin
+```
+
+### Prepare Java tokenizer
+
+```
+git clone git@github.com:triceo/java-tokenizer.git
+cd java-tokenizer
+mvn clean install
+cp target/java-tokenizer-1.0-SNAPSHOT-jar-with-dependencies.jar ./java-tokenizer.jar
 ```
