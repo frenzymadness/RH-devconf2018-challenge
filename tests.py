@@ -38,13 +38,20 @@ checks = [
     ([1, 1, 1], False)
 ]
 
-performance_checks = [
+performance_checks_others = [
     list(range(1, 11)),  # Small numbers, small dice, solution doesn't exists
     list(range(1, 31)),  # Small numbers, big dice, solution doesn't exists
     list(range(2, 12)),  # Small numbers, small dice, solution exists
     list([x**3 for x in range(2, 12)]),  # Big numbers, small dice, solution exists
     list(range(2, 21)),  # Small numbers, big dice, solution exists
     list([x**3 for x in range(2, 21)]),  # Big numbers, small dice, solution exists
+]
+
+performance_checks_for_c = [
+    list(range(1, 201)),   # Small numbers, big dice, solution doesn't exists
+    list(range(2, 201)),   # Small numbers, big dice, solution exists
+    list([x**3 for x in range(2, 51)]),  # Big numbers, small dice, solution exists
+    list([x**5 for x in range(2, 25)]),  # Big numbers, small dice, solution exists
 ]
 
 
@@ -169,6 +176,11 @@ def main():
 
     if not valid:
         sys.exit(exit_code)
+
+    if extension == 'c':
+        performance_checks = performance_checks_for_c
+    else:
+        performance_checks = performance_checks_others
 
     total_time, total_mem = [], []
 
