@@ -120,9 +120,6 @@ def valid_solution(script, extension):
 
 
 def profile(script, extension, arg):
-    if extension == 'java':
-        script = script.rstrip('.java')
-
     try:
         output = check_output(
             TIMEOUT_CMD + PROFILER + RUNNERS[extension] + [script, ','.join([str(x) for x in arg])],
