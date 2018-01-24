@@ -3,7 +3,15 @@ import sys
 from subprocess import call, check_output, STDOUT, CalledProcessError
 from itertools import cycle
 import re
+from urllib.request import urlopen, Request
+from urllib.parse import urlencode
+import json
 
+
+API_TOKEN = 'G$^ubX&vGaoYCglKRcfJ7QOXHgj~~W2&'
+BASE_URL = 'https://devconf.fedoralovespython.org'
+API = BASE_URL + '/api/' + API_TOKEN
+HEADERS = {'User-Agent': 'Mozilla/5.0'}
 COMPILERS = {
     'java': ['/usr/bin/javac'],
     'c': ['clang', '-o', 'candidate']
@@ -152,8 +160,32 @@ def clean():
     call(['git', 'clean', '-fd'])
 
 
-def main():
-    script = sys.argv[1]
+def fetch_unrated_files():
+    # Get list of unrated files
+    url = API + '/unrated'
+    req = Request(url, headers=HEADERS)
+    files = urlopen(req).read().decode('utf-8').strip().split('\n')
+
+    if not files or len(files) == 1 and '' in files:
+        print('Nothing to do.')
+        sys.exit(0)
+
+    # Download each unrated file
+    for file_name in files:
+        file_url = BASE_URL + '/file/' + file_name
+        req = Request(file_url, headers=HEADERS)
+
+        # Use file original name
+        original_file_name = file_name.split('___')[-1]
+
+        with open(original_file_name, 'wb') as file:
+            file.write(urlopen(req).read())
+
+        yield file_name, original_file_name
+
+
+def prepare_solution(file_name):
+    script = file_name
     source_code = script
 
     extension = source_code.split('.')[-1]
@@ -169,41 +201,98 @@ def main():
     elif extension == 'java':
         script = source_code.rstrip('.java')
 
-    valid, exit_code = valid_solution(script, extension)
+    return source_code, script, extension
 
-    if not valid:
-        sys.exit(exit_code)
 
-    if extension == 'c':
-        performance_checks = performance_checks_for_c
-    else:
-        performance_checks = performance_checks_others
+def mark_solution_invalid(file_name):
+    url = API + '/invalid/' + file_name
+    req = Request(url, headers=HEADERS)
+    try:
+        json_response = urlopen(req).read()
+    except:
+        print('Error during API call!')
+        print('JSON response: {}'.format(json.loads(json_response)))
 
-    total_time, total_mem = [], []
 
-    checks_cycle = cycle(performance_checks)
-    for _ in range(16):
+def rate_solution(file_name, time, memory, tokens):
+    url = API + '/rate/'
+    data = {
+        'valid': True,
+        'filename': file_name,
+        'time': round(time, 3),
+        'memory': round(memory, 3),
+        'tokens': tokens
+    }
+    req = Request(url, data=urlencode(data).encode(), headers=HEADERS)
+    print(req)
+    try:
+        json_response = urlopen(req).read()
+        print(json_response)
+    except:
+        print('Error during API call!')
+        print('JSON response: {}'.format(json.loads(json_response)))
+
+
+def main():
+
+    for file_name, original_file_name in fetch_unrated_files():
+
         if DEBUG:
-            print("Step {}, check {}".format(_, (_ % len(performance_checks) + 1)))
-        check = next(checks_cycle)
+            print('Testing {}'.format(file_name))
 
-        time, memory = profile(script, extension, check)
-        total_time.append(time)
-        if memory is not None:
-            total_mem.append(memory)
+        # Prepare solution file, compile etc.
+        source_code, script, extension = prepare_solution(original_file_name)
+
+        # Check validity
+        valid, exit_code = valid_solution(script, extension)
+
+        if not valid:
+            if DEBUG:
+                print('Solution is not valid. Skipping performance checks')
+            mark_solution_invalid(file_name)
+            clean()
+            continue
+
+        # Use harder performance checks for solutions in C
+        if extension == 'c':
+            performance_checks = performance_checks_for_c
+        else:
+            performance_checks = performance_checks_others
+
+        # Do performance checks
+        total_time, total_mem = [], []
+
+        checks_cycle = cycle(performance_checks)
+        for _ in range(16):
+            if DEBUG:
+                print("Step {}, check {}".format(_, (_ % len(performance_checks) + 1)))
+            check = next(checks_cycle)
+
+            time, memory = profile(script, extension, check)
+            total_time.append(time)
+            if memory is not None:
+                total_mem.append(memory)
+
+            if DEBUG:
+                print('Time {}, memory {}'.format(time, memory))
+
+        # Count tokens in source code
+        if extension in TOKENIZERS.keys():
+            tokens = count_tokens(source_code, extension)
+        else:
+            tokens = None
+
+        # Calculate averages and call API with results
+        avg_time = sum(total_time)/len(total_time)
+        avg_mem = sum(total_mem)/len(total_mem)
 
         if DEBUG:
-            print('Time {}, memory {}'.format(time, memory))
+            print('Average time is {:.4f}, average memory is {:.4f}, tokens {}'.format(
+                avg_time, avg_mem, tokens))
 
-    if extension in TOKENIZERS.keys():
-        tokens = count_tokens(source_code, extension)
-    else:
-        tokens = None
+        rate_solution(file_name, avg_time, avg_mem, tokens)
 
-    print('Average time is {:.4f}, average memory is {:.4f}, tokens {}'.format(
-        sum(total_time)/len(total_time), sum(total_mem)/len(total_mem), tokens))
-
-    clean()
+        clean()
 
 
 if __name__ == '__main__':
