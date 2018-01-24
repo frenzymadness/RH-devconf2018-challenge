@@ -24,9 +24,9 @@ def winning_die(enemy_die):
                 if enemy_die[i] < turn[j]:
                     wins += 1
                 if enemy_die[i] == turn[j]:
-                    ties += 1 
+                    ties += 1
 
-        try:            
+        try:
             p = wins/(faces**2-ties)
             if p > 0.5:
                 return turn
