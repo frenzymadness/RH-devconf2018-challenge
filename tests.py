@@ -224,10 +224,8 @@ def rate_solution(file_name, time, memory, tokens):
         'tokens': tokens
     }
     req = Request(url, data=urlencode(data).encode(), headers=HEADERS)
-    print(req)
     try:
         json_response = urlopen(req).read()
-        print(json_response)
     except:
         print('Error during API call!')
         print('JSON response: {}'.format(json.loads(json_response)))
