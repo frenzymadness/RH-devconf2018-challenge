@@ -48,11 +48,11 @@ checks = [
 
 performance_checks_others = [
     list(range(1, 11)),  # Small numbers, small dice, solution doesn't exists
-    list(range(1, 31)),  # Small numbers, big dice, solution doesn't exists
+    list(range(1, 15)),  # Small numbers, big dice, solution doesn't exists
     list(range(2, 12)),  # Small numbers, small dice, solution exists
     list([x**3 for x in range(2, 12)]),  # Big numbers, small dice, solution exists
     list(range(2, 21)),  # Small numbers, big dice, solution exists
-    list([x**3 for x in range(2, 21)]),  # Big numbers, small dice, solution exists
+    list([x**3 for x in range(2, 14)]),  # Big numbers, small dice, solution exists
 ]
 
 performance_checks_for_c = [
@@ -214,15 +214,17 @@ def mark_solution_invalid(file_name):
         print('JSON response: {}'.format(json.loads(json_response)))
 
 
-def rate_solution(file_name, time, memory, tokens):
+def rate_solution(file_name, time, memory, tokens, timeouted=False):
     url = API + '/rate/'
     data = {
-        'valid': True,
         'filename': file_name,
         'time': round(time, 3),
         'memory': round(memory, 3),
         'tokens': tokens
     }
+    if timeouted:
+        data['timeouted'] = True
+
     req = Request(url, data=urlencode(data).encode(), headers=HEADERS)
     try:
         json_response = urlopen(req).read()
@@ -267,6 +269,14 @@ def main():
             check = next(checks_cycle)
 
             time, memory = profile(script, extension, check)
+
+            if time == TIMEOUT * 2:
+                if DEBUG:
+                    print('Solution timeouted with {}'.format(check))
+                rate_solution(file_name, 0, 0, 0, timeouted=True)
+                clean()
+                sys.exit(1)
+
             total_time.append(time)
             if memory is not None:
                 total_mem.append(memory)
