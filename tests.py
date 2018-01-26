@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -u
 import sys
 from subprocess import call, check_output, STDOUT, CalledProcessError
 from itertools import cycle
