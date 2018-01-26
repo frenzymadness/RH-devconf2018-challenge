@@ -133,7 +133,11 @@ def profile(script, extension, arg):
             TIMEOUT_CMD + PROFILER + RUNNERS[extension] + [script, ','.join([str(x) for x in arg])],
             stderr=STDOUT)
     except CalledProcessError as e:
-        time, memory = TIMEOUT * 2, None
+        if e.returncode == 124:
+            time, memory = TIMEOUT * 2, None
+        else:
+            print('Something went wrong during execution of profile function')
+            print('Return code {}, exception {}'.format(e.returncode, e))
     else:
         last_line = output.split(b'\n')[-2].replace(b'"', b'')
         time, memory = [float(x.strip()) for x in last_line.split()]
