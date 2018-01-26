@@ -229,6 +229,9 @@ def rate_solution(file_name, time, memory, tokens, timeouted=False):
     if timeouted:
         data['timeouted'] = True
 
+    if DEBUG:
+        print('Rate API call', file_name, data)
+
     req = Request(url, data=urlencode(data).encode(), headers=HEADERS)
     try:
         json_response = urlopen(req).read()
