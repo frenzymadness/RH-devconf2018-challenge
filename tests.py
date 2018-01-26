@@ -25,7 +25,7 @@ PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
 TOKENIZERS = {
     'py': RUNNERS['py'] + ['-m', 'tokenize'],
     'java': ['java', '-jar', 'java-tokenizer.jar'],
-    'c': ['tokenize']
+    'c': ['/usr/local/bin/tokenize']
 }
 TIMEOUT = 60
 TIMEOUT_CMD = ['/usr/bin/timeout', str(TIMEOUT)]
