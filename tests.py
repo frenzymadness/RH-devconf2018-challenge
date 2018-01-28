@@ -171,7 +171,11 @@ def fetch_unrated_files():
     # Get list of unrated files
     url = API + '/unrated'
     req = Request(url, headers=HEADERS)
-    files = urlopen(req).read().decode('utf-8').strip().split('\n')
+    try:
+        files = urlopen(req, timeout=10).read().decode('utf-8').strip().split('\n')
+    except:
+        print("Something went wrong while fetching a list of unrated files")
+        sys.exit(1)
 
     if not files or len(files) == 1 and '' in files:
         print('Nothing to do.')
