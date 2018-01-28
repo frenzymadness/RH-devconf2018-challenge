@@ -21,7 +21,7 @@ RUNNERS = {
     'java': ['java', '-Xms32m', '-Xmx32m'],
     'c': []
 }
-PROFILER = ['/usr/bin/time', '-f', '"%e %M"']
+PROFILER = ['/usr/bin/time', '-f', '"\n%e %M"']
 TOKENIZERS = {
     'py': RUNNERS['py'] + ['-m', 'tokenize'],
     'java': ['java', '-jar', 'java-tokenizer.jar'],
