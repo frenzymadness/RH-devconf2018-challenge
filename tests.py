@@ -90,7 +90,10 @@ def valid_solution(script, extension):
 
     for check in checks:
         enemy, better_exist = check
-        player = run_script(script, extension, ','.join([str(n) for n in enemy]))
+        try:
+            player = run_script(script, extension, ','.join([str(n) for n in enemy]))
+        except:
+            return False, 1
 
         if not better_exist:
             if player is None:
